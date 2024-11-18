@@ -1,0 +1,112 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, ifft, fftfreq
+
+# 信号とノイズの生成
+def generate_noisy_signal(sampling_rate, duration, frequencies, noise_level=0.5):
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    signal = sum(np.sin(2 * np.pi * f * t) for f in frequencies)
+    noise = noise_level * np.random.normal(0, 1, len(t))
+    return t, signal + noise, signal
+
+# ローパスフィルタ
+def apply_low_pass_filter(signal, cutoff_freq, sampling_rate):
+    fft_result = fft(signal)
+    frequencies = fftfreq(len(signal), 1 / sampling_rate)
+    fft_result[np.abs(frequencies) > cutoff_freq] = 0
+    return np.real(ifft(fft_result)), fft_result, frequencies
+
+# 移動平均フィルタ
+def apply_moving_average_filter(signal, window_size):
+    filtered_signal = np.convolve(signal, np.ones(window_size) / window_size, mode='same')
+    return filtered_signal
+
+# 設定
+sampling_rate = 1000  # サンプリング周波数（Hz）
+duration = 2.0  # 信号の長さ（秒）
+frequencies = [10, 50]  # 含まれる信号の周波数（Hz）
+noise_level = 1.0  # ノイズ振幅
+cutoff_freq = 20  # ローパスフィルタのカットオフ周波数（Hz）
+window_size = 50  # 移動平均フィルタの窓サイズ
+
+# 信号の生成
+t, noisy_signal, original_signal = generate_noisy_signal(sampling_rate, duration, frequencies, noise_level)
+
+# ローパスフィルタの適用
+low_pass_filtered_signal, lp_fft_result, lp_frequencies = apply_low_pass_filter(noisy_signal, cutoff_freq, sampling_rate)
+
+# 移動平均フィルタの適用
+moving_average_filtered_signal = apply_moving_average_filter(noisy_signal, window_size)
+ma_fft_result = fft(moving_average_filtered_signal)
+ma_frequencies = fftfreq(len(moving_average_filtered_signal), 1 / sampling_rate)
+
+# FFT解析（元の信号）
+original_fft_result = fft(noisy_signal)
+original_frequencies = fftfreq(len(noisy_signal), 1 / sampling_rate)
+
+# プロット: 時間領域でのフィルタ効果
+plt.figure(figsize=(14, 10))
+
+# 元の信号
+plt.subplot(3, 1, 1)
+plt.plot(t, noisy_signal, label="Noisy Signal", color="red")
+plt.plot(t, original_signal, label="Original Signal", color="green", linestyle="--")
+plt.title("Time Domain: Original and Noisy Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# ローパスフィルタ後
+plt.subplot(3, 1, 2)
+plt.plot(t, low_pass_filtered_signal, label="Low-Pass Filtered Signal", color="blue")
+plt.title(f"Low-Pass Filtered Signal (Cutoff: {cutoff_freq} Hz)")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# 移動平均フィルタ後
+plt.subplot(3, 1, 3)
+plt.plot(t, moving_average_filtered_signal, label=f"Moving Average Filtered Signal (Window: {window_size})", color="orange")
+plt.title("Moving Average Filtered Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
+
+# プロット: 周波数領域でのフィルタ効果
+plt.figure(figsize=(14, 10))
+
+# ノイズ信号のFFT
+plt.subplot(3, 1, 1)
+plt.plot(original_frequencies[:len(original_frequencies)//2], np.abs(original_fft_result[:len(original_frequencies)//2]), label="Noisy Signal FFT", color="red")
+plt.title("FFT of Noisy Signal")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+# ローパスフィルタ後のFFT
+plt.subplot(3, 1, 2)
+plt.plot(lp_frequencies[:len(lp_frequencies)//2], np.abs(lp_fft_result[:len(lp_frequencies)//2]), label="Low-Pass Filtered FFT", color="blue")
+plt.title(f"FFT of Low-Pass Filtered Signal (Cutoff: {cutoff_freq} Hz)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+# 移動平均フィルタ後のFFT
+plt.subplot(3, 1, 3)
+plt.plot(ma_frequencies[:len(ma_frequencies)//2], np.abs(ma_fft_result[:len(ma_frequencies)//2]), label="Moving Average Filtered FFT", color="orange")
+plt.title(f"FFT of Moving Average Filtered Signal (Window: {window_size})")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
