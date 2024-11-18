@@ -1,0 +1,49 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+
+# サンプリング設定
+sampling_rate = 1000  # サンプリング周波数（Hz）
+T = 1.0  # 信号の長さ（秒）
+t = np.linspace(0, T, int(sampling_rate * T), endpoint=False)  # 時間軸
+
+# 加法定理の要素
+alpha = 2 * np.pi * 5 * t  # 5Hz のサイン波
+beta = 2 * np.pi * 10 * t  # 10Hz のサイン波
+
+# 加法定理を適用した信号
+sin_sum = np.sin(alpha + beta)  # 左辺
+sin_cos_sum = np.sin(alpha) * np.cos(beta) + np.cos(alpha) * np.sin(beta)  # 右辺
+
+# 三次元プロット用データ生成
+X, Y = np.meshgrid(t, t)
+Z_sin_sum = np.sin(2 * np.pi * 5 * X + 2 * np.pi * 10 * Y)
+
+# FFTの計算
+fft_sin_sum = fft(sin_sum)
+frequencies = fftfreq(len(t), 1 / sampling_rate)
+
+# 三次元FFTデータ生成
+Frequencies_X, Frequencies_Y = np.meshgrid(frequencies[:len(frequencies) // 2], frequencies[:len(frequencies) // 2])
+fft_3d = np.abs(np.outer(fft_sin_sum[:len(frequencies) // 2], fft_sin_sum[:len(frequencies) // 2]))
+
+# 三次元プロット: 時間領域
+fig = plt.figure(figsize=(12, 6))
+ax1 = fig.add_subplot(121, projection='3d')
+ax1.plot_surface(X, Y, Z_sin_sum, cmap='viridis')
+ax1.set_title("3D Plot of sin(α + β)")
+ax1.set_xlabel("Time t1")
+ax1.set_ylabel("Time t2")
+ax1.set_zlabel("Amplitude")
+
+# 三次元プロット: 周波数領域（FFT）
+ax2 = fig.add_subplot(122, projection='3d')
+ax2.plot_surface(Frequencies_X, Frequencies_Y, fft_3d, cmap='viridis')
+ax2.set_title("3D FFT of sin(α + β)")
+ax2.set_xlabel("Frequency f1")
+ax2.set_ylabel("Frequency f2")
+ax2.set_zlabel("Magnitude")
+
+plt.tight_layout()
+plt.show()
