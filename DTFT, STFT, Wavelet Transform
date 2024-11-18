@@ -1,0 +1,78 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import stft
+from scipy.signal import morlet
+
+# サンプル信号の生成
+def generate_signal(t):
+    """
+    時間変化するサンプル信号を生成
+    - 5Hz 正弦波 + 20Hz 正弦波（t > 2 の場合）
+    """
+    signal = np.sin(2 * np.pi * 5 * t)
+    signal[t > 2] += np.sin(2 * np.pi * 20 * t[t > 2])
+    return signal
+
+# DTFTの計算
+def dtft(signal, num_points=512):
+    """
+    離散時間フーリエ変換（DTFT）を計算
+    - signal: 離散信号
+    - num_points: 周波数軸の分解能
+    """
+    omega = np.linspace(-np.pi, np.pi, num_points)
+    dtft_result = np.array([np.sum(signal * np.exp(-1j * w * np.arange(len(signal)))) for w in omega])
+    return omega, np.abs(dtft_result)
+
+# サンプル信号の生成
+t = np.linspace(0, 4, 1000, endpoint=False)  # 時間軸
+signal = generate_signal(t)
+
+# DTFTの計算
+omega, dtft_result = dtft(signal)
+
+# STFTの計算
+f_stft, t_stft, Zxx = stft(signal, fs=1000, nperseg=128)
+
+# ウェーブレット変換の計算
+scales = np.arange(1, 128)  # スケール（周波数軸）
+wavelet_result = np.array([np.abs(np.convolve(signal, morlet(len(signal), w=scale), mode='same')) for scale in scales])
+
+# プロット
+plt.figure(figsize=(14, 12))
+
+# オリジナル信号
+plt.subplot(3, 1, 1)
+plt.plot(t, signal)
+plt.title("Original Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+
+# DTFTの結果
+plt.subplot(3, 1, 2)
+plt.plot(omega, dtft_result)
+plt.title("DTFT of Signal")
+plt.xlabel("Frequency (rad/s)")
+plt.ylabel("Magnitude")
+plt.grid()
+
+# STFTの結果
+plt.subplot(3, 1, 3)
+plt.pcolormesh(t_stft, f_stft, np.abs(Zxx), shading='gouraud')
+plt.title("STFT of Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Frequency (Hz)")
+plt.colorbar(label="Magnitude")
+plt.tight_layout()
+
+# ウェーブレット変換のプロット
+plt.figure(figsize=(10, 6))
+plt.imshow(wavelet_result, extent=[t[0], t[-1], scales[-1], scales[0]], aspect='auto', cmap='viridis')
+plt.title("Wavelet Transform of Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Scale (Frequency)")
+plt.colorbar(label="Magnitude")
+plt.gca().invert_yaxis()  # スケールを高周波から低周波へ反転
+plt.tight_layout()
+plt.show()
