@@ -1,0 +1,124 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.integrate import quad
+from scipy.fft import fft, fftfreq
+
+# 6.1 線形代数: ベクトル空間と基底
+def orthogonal_basis_demo():
+    """
+    ベクトル空間の直交基底を可視化
+    """
+    t = np.linspace(0, 2 * np.pi, 1000)
+    f1 = np.sin(t)  # 基底1
+    f2 = np.cos(t)  # 基底2
+    inner_product = np.sum(f1 * f2)  # 直交性確認（理想的には0）
+    
+    plt.figure(figsize=(10, 4))
+    plt.plot(t, f1, label="sin(t)")
+    plt.plot(t, f2, label="cos(t)")
+    plt.title(f"Orthogonal Basis (Inner Product: {inner_product:.2f})")
+    plt.xlabel("Time")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+# 6.2 複素数と複素解析: オイラーの公式
+def euler_formula_demo():
+    """
+    オイラーの公式: e^(i*theta) = cos(theta) + i*sin(theta)
+    """
+    theta = np.linspace(0, 2 * np.pi, 500)
+    complex_exp = np.exp(1j * theta)  # 複素指数
+    real_part = np.real(complex_exp)
+    imag_part = np.imag(complex_exp)
+    
+    plt.figure(figsize=(6, 6))
+    plt.plot(real_part, imag_part, label=r"$e^{i\theta}$")
+    plt.scatter([1, 0, -1, 0], [0, 1, 0, -1], color='red', label="Key Points")
+    plt.axhline(0, color='black', linewidth=0.5, linestyle="--")
+    plt.axvline(0, color='black', linewidth=0.5, linestyle="--")
+    plt.title("Euler's Formula on the Complex Plane")
+    plt.xlabel("Real")
+    plt.ylabel("Imaginary")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+# 6.3 積分と微分: 畳み込み積分とガウス関数のフーリエ変換
+def gaussian_fourier_transform():
+    """
+    ガウス関数のフーリエ変換を計算
+    """
+    def gaussian(x, sigma=1):
+        return np.exp(-x**2 / (2 * sigma**2)) / (np.sqrt(2 * np.pi) * sigma)
+    
+    def fourier_transform_analytical(k, sigma=1):
+        return np.exp(-2 * (np.pi * k * sigma)**2)
+    
+    x = np.linspace(-5, 5, 500)
+    k = np.linspace(-5, 5, 500)
+    g_x = gaussian(x)
+    g_k = fourier_transform_analytical(k)
+    
+    plt.figure(figsize=(10, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(x, g_x, label="Gaussian (Time Domain)")
+    plt.title("Gaussian Function")
+    plt.xlabel("x")
+    plt.ylabel("Amplitude")
+    plt.grid()
+    plt.legend()
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(k, g_k, label="Fourier Transform", color="orange")
+    plt.title("Fourier Transform of Gaussian")
+    plt.xlabel("Frequency (k)")
+    plt.ylabel("Magnitude")
+    plt.grid()
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
+# 6.4 確率と統計: ホワイトノイズとスペクトル密度
+def white_noise_and_psd():
+    """
+    ホワイトノイズの生成とスペクトル密度の計算
+    """
+    sampling_rate = 1000  # サンプリング周波数
+    duration = 1.0  # 秒
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    white_noise = np.random.normal(0, 1, len(t))  # 平均0, 分散1のホワイトノイズ
+
+    # FFT
+    fft_result = fft(white_noise)
+    freqs = fftfreq(len(t), 1 / sampling_rate)
+    psd = np.abs(fft_result) ** 2  # パワースペクトル密度
+
+    # プロット
+    plt.figure(figsize=(10, 6))
+    plt.subplot(2, 1, 1)
+    plt.plot(t, white_noise, label="White Noise")
+    plt.title("White Noise (Time Domain)")
+    plt.xlabel("Time (s)")
+    plt.ylabel("Amplitude")
+    plt.grid()
+    plt.legend()
+
+    plt.subplot(2, 1, 2)
+    plt.plot(freqs[:len(freqs)//2], psd[:len(psd)//2], label="Power Spectral Density")
+    plt.title("Power Spectral Density")
+    plt.xlabel("Frequency (Hz)")
+    plt.ylabel("Power")
+    plt.grid()
+    plt.legend()
+
+    plt.tight_layout()
+    plt.show()
+
+# 各デモを実行
+orthogonal_basis_demo()        # 6.1 線形代数: 直交基底
+euler_formula_demo()           # 6.2 複素数と複素解析
+gaussian_fourier_transform()   # 6.3 積分と微分
+white_noise_and_psd()          # 6.4 確率と統計
