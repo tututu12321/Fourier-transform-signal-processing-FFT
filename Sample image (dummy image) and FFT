@@ -1,0 +1,81 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from numpy.fft import fft2, fftshift, ifft2
+
+# サンプル画像（ダミー画像）の生成
+def create_dummy_image(size=256):
+    """
+    サンプル用のダミー画像を生成する。
+    - size: 画像のサイズ (size x size)
+    """
+    x = np.linspace(0, 4 * np.pi, size)
+    y = np.linspace(0, 4 * np.pi, size)
+    X, Y = np.meshgrid(x, y)
+    image = (np.sin(X) + np.cos(Y)) * 128 + 128  # サイン波+コサイン波を正規化
+    return image.astype(np.uint8)
+
+# FFT処理
+def apply_fft(image):
+    """
+    画像にFFTを適用して、周波数領域に変換する。
+    """
+    f_transform = fft2(image)  # 2次元FFT
+    f_shift = fftshift(f_transform)  # 周波数を中心にシフト
+    magnitude_spectrum = 20 * np.log(np.abs(f_shift) + 1)  # 振幅スペクトル
+    return f_shift, magnitude_spectrum
+
+# 逆FFT処理
+def apply_ifft(f_shift):
+    """
+    周波数領域から画像に逆FFTを適用して復元する。
+    """
+    f_ishift = np.fft.ifftshift(f_shift)  # シフトを戻す
+    reconstructed_image = np.abs(ifft2(f_ishift))  # 逆FFTで画像を再構築
+    return reconstructed_image
+
+# ダミー画像を生成
+image = create_dummy_image()
+
+# FFTを適用
+f_shift, magnitude_spectrum = apply_fft(image)
+
+# 周波数領域でのフィルタリング例: 中心部分のみ残す（ローパスフィルタ）
+rows, cols = image.shape
+crow, ccol = rows // 2, cols // 2
+mask = np.zeros((rows, cols), dtype=np.uint8)
+mask[crow - 30:crow + 30, ccol - 30:ccol + 30] = 1
+filtered_f_shift = f_shift * mask
+
+# 逆FFTで画像を再構築
+reconstructed_image = apply_ifft(filtered_f_shift)
+
+# 結果のプロット
+plt.figure(figsize=(12, 8))
+
+# 元の画像
+plt.subplot(2, 2, 1)
+plt.imshow(image, cmap='gray')
+plt.title("Original Dummy Image")
+plt.axis("off")
+
+# 振幅スペクトル
+plt.subplot(2, 2, 2)
+plt.imshow(magnitude_spectrum, cmap='gray')
+plt.title("Magnitude Spectrum (FFT)")
+plt.axis("off")
+
+# フィルタ後の振幅スペクトル
+filtered_magnitude = 20 * np.log(np.abs(filtered_f_shift) + 1)
+plt.subplot(2, 2, 3)
+plt.imshow(filtered_magnitude, cmap='gray')
+plt.title("Filtered Magnitude Spectrum")
+plt.axis("off")
+
+# 復元画像
+plt.subplot(2, 2, 4)
+plt.imshow(reconstructed_image, cmap='gray')
+plt.title("Reconstructed Image (Low-Pass Filter)")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()
