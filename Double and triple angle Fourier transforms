@@ -1,0 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.fft import fft, fftfreq
+
+# パラメータ設定
+fs = 1000  # サンプリング周波数 (Hz)
+t = np.linspace(0, 1, fs, endpoint=False)  # 時間ベクトル（1秒間）
+
+# 基本周波数
+f0 = 50  # 基本周波数 (Hz)
+
+# 基本周波数、倍角、三倍角のサイン波とコサイン波を生成
+sin_f0 = np.sin(2 * np.pi * f0 * t)  # sin(f0 * t)
+cos_f0 = np.cos(2 * np.pi * f0 * t)  # cos(f0 * t)
+
+# 倍角 (2θ)
+sin_2f0 = np.sin(2 * 2 * np.pi * f0 * t)  # sin(2 * f0 * t)
+cos_2f0 = np.cos(2 * 2 * np.pi * f0 * t)  # cos(2 * f0 * t)
+
+# 三倍角 (3θ)
+sin_3f0 = np.sin(3 * 2 * np.pi * f0 * t)  # sin(3 * f0 * t)
+cos_3f0 = np.cos(3 * 2 * np.pi * f0 * t)  # cos(3 * f0 * t)
+
+# 時間領域の波形をプロット
+plt.figure(figsize=(12, 10))
+
+# 基本周波数のサイン波とコサイン波
+plt.subplot(2, 2, 1)
+plt.plot(t, sin_f0, label=r'$\sin(2\pi f_0 t)$', color='b')
+plt.title('Sine Wave (Frequency f0)', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Amplitude', fontsize=12)
+plt.grid(True)
+plt.legend(loc='upper right')
+
+plt.subplot(2, 2, 2)
+plt.plot(t, cos_f0, label=r'$\cos(2\pi f_0 t)$', color='r')
+plt.title('Cosine Wave (Frequency f0)', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Amplitude', fontsize=12)
+plt.grid(True)
+plt.legend(loc='upper right')
+
+# 倍角のサイン波とコサイン波
+plt.subplot(2, 2, 3)
+plt.plot(t, sin_2f0, label=r'$\sin(2 \times 2\pi f_0 t)$', color='g')
+plt.title('Sine Wave (Frequency 2f0)', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Amplitude', fontsize=12)
+plt.grid(True)
+plt.legend(loc='upper right')
+
+plt.subplot(2, 2, 4)
+plt.plot(t, cos_2f0, label=r'$\cos(2 \times 2\pi f_0 t)$', color='m')
+plt.title('Cosine Wave (Frequency 2f0)', fontsize=14)
+plt.xlabel('Time (s)', fontsize=12)
+plt.ylabel('Amplitude', fontsize=12)
+plt.grid(True)
+plt.legend(loc='upper right')
+
+plt.tight_layout()
+plt.show()
+
+# FFT（高速フーリエ変換）で周波数成分を分析
+def plot_fft(signal, title):
+    N = len(signal)  # 信号の長さ
+    fft_vals = fft(signal)  # FFTを計算
+    fft_freq = fftfreq(N, 1/fs)  # 周波数のビン
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(fft_freq[:N//2], np.abs(fft_vals)[:N//2])  # 正の周波数のみプロット
+    plt.title(f'Frequency Spectrum - {title}', fontsize=14)
+    plt.xlabel('Frequency (Hz)', fontsize=12)
+    plt.ylabel('Magnitude', fontsize=12)
+    plt.grid(True)
+    plt.show()
+
+# 各信号のFFTをプロット
+plot_fft(sin_f0, 'Sine Wave (f0)')
+plot_fft(cos_f0, 'Cosine Wave (f0)')
+plot_fft(sin_2f0, 'Sine Wave (2f0)')
+plot_fft(cos_2f0, 'Cosine Wave (2f0)')
+plot_fft(sin_3f0, 'Sine Wave (3f0)')
+plot_fft(cos_3f0, 'Cosine Wave (3f0)')
