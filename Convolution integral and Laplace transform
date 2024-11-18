@@ -1,0 +1,64 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+from sympy import symbols, laplace_transform, Heaviside, exp, integrate
+
+# ----- ラプラス変換の計算 -----
+# シンボルの定義
+t, s, a, T = symbols('t s a T', real=True, positive=True)
+
+# 関数の定義
+f_t = 1 * Heaviside(t) - 1 * Heaviside(t - T)  # f(t) = 1 (0 <= t <= T), 0 (t > T)
+g_t = exp(-a * t)  # g(t) = e^(-at)
+
+# ラプラス変換を計算
+F_s = laplace_transform(f_t, t, s)[0]  # F(s) のラプラス変換
+G_s = laplace_transform(g_t, t, s)[0]  # G(s) のラプラス変換
+
+# ラプラス変換の結果を表示
+print("Laplace Transform of f(t):", F_s)
+print("Laplace Transform of g(t):", G_s)
+
+# ----- 畳み込み積分 -----
+# 畳み込みを計算
+conv = integrate(f_t * g_t.subs(t, t - symbols('tau')), (t, 0, T))
+print("Convolution Integral:", conv)
+
+# ----- ボード線図 -----
+# 定数の設定
+a_value = 1.0  # g(t) = e^(-at) の減衰定数
+T_value = 2.0  # f(t) の区間の長さ（0 <= t <= T）
+
+# 周波数範囲を設定
+frequencies = np.logspace(-1, 2, 500)  # 周波数範囲（0.1 Hz ～ 100 Hz）
+s_values = 1j * 2 * np.pi * frequencies  # s = jω の計算
+
+# F(s) と G(s) の数値評価
+F_s_eval = (1 - np.exp(-s_values * T_value)) / s_values
+G_s_eval = 1 / (s_values + a_value)
+
+# ボード線図をプロット
+plt.figure(figsize=(12, 8))
+
+# 振幅特性
+plt.subplot(2, 1, 1)
+plt.semilogx(frequencies, 20 * np.log10(np.abs(F_s_eval)), label='|F(s)|')
+plt.semilogx(frequencies, 20 * np.log10(np.abs(G_s_eval)), label='|G(s)|', linestyle='--')
+plt.title("Bode Plot - Magnitude")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude (dB)")
+plt.legend()
+plt.grid()
+
+# 位相特性
+plt.subplot(2, 1, 2)
+plt.semilogx(frequencies, np.angle(F_s_eval, deg=True), label='∠F(s)')
+plt.semilogx(frequencies, np.angle(G_s_eval, deg=True), label='∠G(s)', linestyle='--')
+plt.title("Bode Plot - Phase")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Phase (degrees)")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
