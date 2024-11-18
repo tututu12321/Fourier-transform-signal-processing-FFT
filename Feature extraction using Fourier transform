@@ -1,0 +1,66 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.datasets import load_digits
+from numpy.fft import fft2, fftshift
+
+# サンプルデータセットの読み込み（手書き数字画像）
+digits = load_digits()
+images = digits.images  # 画像データ（8x8グレースケール画像）
+labels = digits.target  # ラベル（数字）
+
+# 特徴量の作成: フーリエ変換を用いた特徴抽出
+def extract_fft_features(images):
+    """
+    各画像に対して2次元FFTを適用し、周波数領域の低周波成分を抽出。
+    """
+    features = []
+    for img in images:
+        f_transform = fft2(img)  # 2次元フーリエ変換
+        f_shift = fftshift(f_transform)  # 中心に低周波成分を移動
+        magnitude_spectrum = np.log(np.abs(f_shift) + 1)  # 振幅スペクトル
+        low_freq_features = magnitude_spectrum[:4, :4].flatten()  # 中心から低周波成分を抽出
+        features.append(low_freq_features)
+    return np.array(features)
+
+# 特徴量を作成
+fft_features = extract_fft_features(images)
+
+# データを訓練データとテストデータに分割
+X_train, X_test, y_train, y_test = train_test_split(fft_features, labels, test_size=0.2, random_state=42)
+
+# ランダムフォレストを使用した分類
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
+
+# テストデータで予測
+y_pred = clf.predict(X_test)
+
+# 結果の評価
+print("Classification Report:")
+print(classification_report(y_test, y_pred))
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+# サンプルの表示
+plt.figure(figsize=(12, 6))
+
+# 元画像
+plt.subplot(1, 2, 1)
+plt.imshow(images[0], cmap='gray')
+plt.title("Original Image")
+plt.axis("off")
+
+# フーリエ変換の振幅スペクトル
+plt.subplot(1, 2, 2)
+f_transform = fft2(images[0])
+f_shift = fftshift(f_transform)
+magnitude_spectrum = np.log(np.abs(f_shift) + 1)
+plt.imshow(magnitude_spectrum, cmap='gray')
+plt.title("Magnitude Spectrum (FFT)")
+plt.axis("off")
+
+plt.tight_layout()
+plt.show()
