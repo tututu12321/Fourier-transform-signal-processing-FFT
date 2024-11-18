@@ -1,0 +1,71 @@
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.signal import correlate
+
+# サンプル信号の定義
+def signal1(t):
+    """信号1: 矩形波"""
+    return np.where((t >= 1) & (t <= 3), 1, 0)  # 1 <= t <= 3 の間で値が1、それ以外は0
+
+def signal2(t):
+    """信号2: 減衰した正弦波"""
+    return np.sin(2 * np.pi * 1 * t) * np.exp(-0.5 * t)
+
+# 時間範囲の設定
+t = np.linspace(0, 5, 500)  # 0から5秒までの500ポイント
+dt = t[1] - t[0]  # サンプリング間隔
+
+# 信号の生成
+x = signal1(t)
+h = signal2(t)
+
+# 畳み込み積分の計算
+conv = np.convolve(x, h, mode='full') * dt  # 畳み込み
+t_conv = np.linspace(2 * t[0], 2 * t[-1], len(conv))  # 畳み込み結果の時間軸
+
+# 相関関数の計算
+corr = correlate(x, h, mode='full')  # 相関関数
+t_corr = np.linspace(-t[-1], t[-1], len(corr))  # 相関結果の時間軸
+
+# プロット
+plt.figure(figsize=(14, 8))
+
+# 元の信号1
+plt.subplot(3, 2, 1)
+plt.plot(t, x, label="Signal 1 (x)")
+plt.title("Signal 1")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+# 元の信号2
+plt.subplot(3, 2, 2)
+plt.plot(t, h, label="Signal 2 (h)")
+plt.title("Signal 2")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+# 畳み込み積分のプロット
+plt.subplot(3, 1, 2)
+plt.plot(t_conv, conv, label="Convolution (x * h)", color='green')
+plt.title("Convolution Integral")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+# 相関関数のプロット
+plt.subplot(3, 1, 3)
+plt.plot(t_corr, corr, label="Correlation (x ⋆ h)", color='red')
+plt.title("Cross-Correlation")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.grid()
+plt.legend()
+
+plt.tight_layout()
+plt.show()
