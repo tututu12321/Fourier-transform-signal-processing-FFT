@@ -1,0 +1,111 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# サンプリングと標本化
+def generate_signal(frequencies, sampling_rate, duration):
+    """
+    複数周波数の正弦波を生成する関数
+    - frequencies: 信号の周波数リスト
+    - sampling_rate: サンプリング周波数
+    - duration: 信号の長さ（秒）
+    """
+    t = np.linspace(0, duration, int(sampling_rate * duration), endpoint=False)
+    signal = sum(np.sin(2 * np.pi * f * t) for f in frequencies)
+    return t, signal
+
+# 離散フーリエ変換（DFT）
+def dft(signal):
+    """
+    離散フーリエ変換（DFT）を実装
+    - signal: 時間領域の離散信号
+    """
+    N = len(signal)
+    dft_result = np.zeros(N, dtype=complex)
+    for k in range(N):
+        dft_result[k] = sum(signal[n] * np.exp(-2j * np.pi * k * n / N) for n in range(N))
+    return dft_result
+
+# 高速フーリエ変換（FFT）
+def fft(signal):
+    """
+    高速フーリエ変換（FFT）をSciPyのfftを使って実行
+    - signal: 時間領域の離散信号
+    """
+    return np.fft.fft(signal)
+
+# サンプリング定理とエイリアシングのデモ
+sampling_rate = 1000  # サンプリング周波数（Hz）
+duration = 1.0  # 信号の長さ（秒）
+frequencies = [50, 120]  # 含まれる周波数（Hz）
+
+# 信号生成
+t, signal = generate_signal(frequencies, sampling_rate, duration)
+
+# エイリアシングの例: サンプリング周波数を低く設定
+aliased_sampling_rate = 150  # エイリアシングを起こすサンプリング周波数
+t_aliased, aliased_signal = generate_signal(frequencies, aliased_sampling_rate, duration)
+
+# FFTの計算
+fft_result = fft(signal)
+frequencies_fft = np.fft.fftfreq(len(signal), 1 / sampling_rate)
+
+# プロット: サンプリングとエイリアシング
+plt.figure(figsize=(14, 8))
+
+# 元の信号
+plt.subplot(3, 2, 1)
+plt.plot(t, signal, label="Original Signal")
+plt.title("Original Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# エイリアシング信号
+plt.subplot(3, 2, 2)
+plt.stem(t_aliased, aliased_signal, label="Aliased Signal", basefmt=" ")
+plt.title("Aliased Signal")
+plt.xlabel("Time (s)")
+plt.ylabel("Amplitude")
+plt.legend()
+plt.grid()
+
+# DFT結果
+dft_result = dft(signal)
+plt.subplot(3, 2, 3)
+plt.stem(np.arange(len(dft_result)), np.abs(dft_result), basefmt=" ", label="DFT Result")
+plt.title("DFT Magnitude Spectrum")
+plt.xlabel("Frequency Index")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+# FFT結果
+plt.subplot(3, 2, 4)
+plt.stem(frequencies_fft[:len(frequencies_fft) // 2], np.abs(fft_result[:len(frequencies_fft) // 2]),
+         basefmt=" ", label="FFT Result")
+plt.title("FFT Magnitude Spectrum")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+# 窓関数の効果: 矩形窓とハニング窓の比較
+window = np.hanning(len(signal))  # ハニング窓
+windowed_signal = signal * window
+fft_windowed_result = fft(windowed_signal)
+
+# 元信号 vs 窓付き信号のスペクトル比較
+plt.subplot(3, 2, 5)
+plt.stem(frequencies_fft[:len(frequencies_fft) // 2], np.abs(fft_result[:len(frequencies_fft) // 2]),
+         basefmt=" ", label="Original Signal FFT")
+plt.stem(frequencies_fft[:len(frequencies_fft) // 2], np.abs(fft_windowed_result[:len(frequencies_fft) // 2]),
+         basefmt=" ", linefmt="r-", markerfmt="ro", label="Windowed Signal FFT")
+plt.title("Effect of Window Function (Hanning)")
+plt.xlabel("Frequency (Hz)")
+plt.ylabel("Magnitude")
+plt.legend()
+plt.grid()
+
+plt.tight_layout()
+plt.show()
